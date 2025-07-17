@@ -405,7 +405,7 @@ class App {
             tdRotPeriod.innerText = `${b.mapped.rotationPeriod.toFixed(2)} days`;
             tdPressure.innerText = `${b.mapped.pressure.toFixed(2)} atm`;
             tdOxyAtmos.innerText = `${b.mapped.oxygen.toFixed(2)}%`;
-            tdTilt.innerText = `${b.mapped.tilt.toFixed(3)} °`;
+            tdTilt.innerText = `${b.mapped.tilt.toFixed(3)}°`;
 
             if (Object.hasOwn(b, 'moon')) {
                 tdMoonName.innerText = b.moon.name;

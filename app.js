@@ -73,6 +73,7 @@ class App {
         this.rockies = [];
 
         this.clearData();
+        document.body.classList.remove('loaded');
 
         this.setStatus(`Processing ${this.files.length} files`);
 

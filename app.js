@@ -6,8 +6,8 @@ class App {
     resultsDiv;
 
     limitToContest = false;
-    contestStart = +new Date('2025-07-01T00:00:00Z');
-    contestEnd = +new Date('2025-08-31T00:00:00Z');
+    contestStart = +new Date('2025-07-17T02:00:00Z');
+    contestEnd = +new Date('2025-09-01T04:00:00Z');
 
     files;
 
@@ -22,7 +22,8 @@ class App {
         this.filesUpload = document.getElementById('files');
         this.statusField = document.getElementById('upload-status');
         this.limitToContestInput = document.getElementById('limit-to-contest');
-        this.resultsDiv = document.getElementById('results');
+        this.rankingDiv = document.getElementById('ranking');
+        this.resultsDiv = document.getElementById('allresults');
 
         this.filesUpload.addEventListener('change', async e => {
             await this.uploadFiles();
@@ -94,11 +95,14 @@ class App {
 
         this.rockies = this.elws.length > 0 ? this.rockies.filter(r => this.getBodyParent(r)) : [];
 
+        this.mappedBodies = this.mapAllBodies();
+
         this.setStatus(`Found ${this.elws.length} Earth-like worlds and ${this.rockies.length} rocky moons`);
 
-        this.printFindings();
+        this.printRanking();
+        this.printAll();
 
-        console.log({ elws: this.elws, rockies: this.rockies });
+        console.log({ elws: this.elws, rockies: this.rockies, all: this.mappedBodies });
     }
 
     filterLines(lines) {
@@ -142,7 +146,7 @@ class App {
 
     // https://en.wikipedia.org/wiki/Earth_Similarity_Index
     calcESI(value, compareValue) {
-        return (1 - ((compareValue - value) / (compareValue + value))).toFixed(2);
+        return 1 - (Math.abs(value - compareValue) / Math.abs(value + compareValue));
     }
 
     calcOverallSimilarity(body, comparison) {
@@ -191,8 +195,8 @@ class App {
         }
     }
 
-    mapBodyValues(body) {
-        return {
+    mapBodyValues(body, isELW = false) {
+        const mapped = {
             name: body.BodyName,
             mass: body.MassEM,
             gravity: body.SurfaceGravity / 9.8,
@@ -203,11 +207,126 @@ class App {
             eccentricity: body.Eccentricity,
             pressure: body.SurfacePressure / 101325,
             oxygen: body.AtmosphereComposition?.find(c => c.Name === 'Oxygen')?.Percent || 0,
-            tilt: body.AxialTilt
+            tilt: Math.abs(body.AxialTilt)
         }
+
+        if (isELW) {
+            const earth = this.getEarthValues();
+
+            mapped.esi = {
+                mass: this.calcESI(mapped.mass, earth.mass),
+                gravity: this.calcESI(mapped.gravity, earth.gravity),
+                radius: this.calcESI(mapped.radius, earth.radius),
+                temperature: this.calcESI(mapped.temperature, earth.temperature),
+                orbitalPeriod: this.calcESI(mapped.orbitalPeriod, earth.orbitalPeriod),
+                rotationPeriod: this.calcESI(mapped.rotationPeriod, earth.rotationPeriod),
+                eccentricity: this.calcESI(mapped.eccentricity, earth.eccentricity),
+                pressure: this.calcESI(mapped.pressure, earth.pressure),
+                oxygen: this.calcESI(mapped.oxygen, earth.oxygen),
+                tilt: this.calcESI(mapped.tilt, earth.tilt),
+                overall: this.calcOverallSimilarity(mapped, earth)
+            }
+        } else {
+            const moon = this.getMoonValues();
+
+            mapped.esi = {
+                mass: this.calcESI(mapped.mass, moon.mass),
+                gravity: this.calcESI(mapped.gravity, moon.gravity),
+                radius: this.calcESI(mapped.radius, moon.radius),
+                orbitalPeriod: this.calcESI(mapped.orbitalPeriod, moon.orbitalPeriod),
+            }
+        }
+
+        return mapped;
     }
 
-    printFindings() {
+    mapAllBodies() {
+        const bodies = [];
+
+        for (let i = 0; i < this.elws.length; i++) {
+            const moon = this.getMoons(this.elws[i]).map(m => this.mapBodyValues(m))[0];
+
+            const body = {
+                name: this.elws[i].BodyName,
+                original: this.elws[i],
+                mapped: this.mapBodyValues(this.elws[i], true),
+            }
+
+            if (moon) body.moon = moon;
+
+            bodies.push(body);
+        }
+
+        return bodies;
+    }
+
+    findClosest(key, isELW = false) {
+        const bodies = isELW ? this.mappedBodies.map(b => b.mapped) : this.mappedBodies.filter(b => Object.hasOwn(b, 'moon')).map(b => b.moon);
+
+        bodies.sort((a, b) => b.esi[key] - a.esi[key]);
+
+        return bodies[0];
+    }
+
+    printRanking() {
+        [...this.rankingDiv.children].forEach(c => c.parentElement.removeChild(c));
+
+        const earth = this.getEarthValues();
+        const moon = this.getMoonValues();
+
+        const [table, thead, tbody] = ['table', 'thead', 'tbody'].map(el => document.createElement(el));
+
+        ['Criterium', 'Body', 'Value', 'Earth value', 'ESI'].map(h => {
+            const th = document.createElement('th');
+            th.innerText = h;
+            thead.appendChild(th)
+        });
+        table.appendChild(thead);
+
+        const [mass, gravity, radius, temp, orbPeriod, ecc, rotPeriod, pressure, oxygen, tilt] =
+            ['mass', 'gravity', 'radius', 'temperature', 'orbitalPeriod', 'eccentricity', 'rotationPeriod', 'pressure', 'oxygen', 'tilt'].map(v => this.findClosest(v, true));
+
+        const [moonMass, moonGravity, moonRadius, moonOrbPeriod] = ['mass', 'gravity', 'radius', 'orbitalPeriod'].map(v => this.findClosest(v));
+
+        tbody.appendChild(this.getRankingRow('Mass', mass.name, mass.mass.toFixed(2), earth.mass.toFixed(2), mass.esi.mass, ' EM'));
+        tbody.appendChild(this.getRankingRow('Gravity', gravity.name, gravity.gravity.toFixed(2), earth.gravity.toFixed(2), gravity.esi.gravity, ' G'));
+        tbody.appendChild(this.getRankingRow('Radius', radius.name, radius.radius.toFixed(0), earth.radius.toFixed(0), radius.esi.radius, ' km'));
+        tbody.appendChild(this.getRankingRow('Temperature', temp.name, temp.temperature.toFixed(2), earth.temperature.toFixed(2), temp.esi.temperature, ' K'));
+        tbody.appendChild(this.getRankingRow('Orbital period', orbPeriod.name, orbPeriod.orbitalPeriod.toFixed(3), earth.orbitalPeriod.toFixed(3), orbPeriod.esi.orbitalPeriod, ' days'));
+        tbody.appendChild(this.getRankingRow('Eccentricity', ecc.name, ecc.eccentricity.toFixed(4), earth.eccentricity.toFixed(4), ecc.esi.eccentricity));
+        tbody.appendChild(this.getRankingRow('Rotation period', rotPeriod.name, rotPeriod.rotationPeriod.toFixed(2), earth.rotationPeriod.toFixed(2), rotPeriod.esi.rotationPeriod, ' days'));
+        tbody.appendChild(this.getRankingRow('Pressure', pressure.name, pressure.pressure.toFixed(2), earth.pressure.toFixed(2), pressure.esi.pressure, ' atm'));
+        tbody.appendChild(this.getRankingRow('Oxygen', oxygen.name, oxygen.oxygen.toFixed(2), earth.oxygen.toFixed(2), oxygen.esi.oxygen, '%'));
+        tbody.appendChild(this.getRankingRow('Tilt', tilt.name, tilt.tilt.toFixed(3), earth.tilt.toFixed(3), tilt.esi.tilt, '°'));
+
+        tbody.appendChild(this.getRankingRow('Moon mass', moonMass.name, moonMass.mass.toFixed(2), moon.mass.toFixed(2), moonMass.esi.mass, ' EM'));
+        tbody.appendChild(this.getRankingRow('Moon gravity', moonGravity.name, moonGravity.gravity.toFixed(2), moon.gravity.toFixed(2), moonGravity.esi.gravity, ' G'));
+        tbody.appendChild(this.getRankingRow('Moon radius', moonRadius.name, moonRadius.radius.toFixed(0), moon.radius.toFixed(0), moonRadius.esi.radius, ' km'));
+        tbody.appendChild(this.getRankingRow('Moon orbital period', moonOrbPeriod.name, moonOrbPeriod.orbitalPeriod.toFixed(3), moon.orbitalPeriod.toFixed(3), moonOrbPeriod.esi.orbitalPeriod, ' days'));
+
+        table.appendChild(tbody);
+        this.rankingDiv.appendChild(table);
+    }
+
+    getRankingRow(criterium, body, rawvalue, earthvalue, esi, suffix = '') {
+        const tr = document.createElement('tr');
+        const [tdC, tdB, tdV, tdE, tdI] = ['td', 'td', 'td', 'td', 'td'].map(td => document.createElement(td));
+
+        tdC.innerText = criterium;
+        tr.appendChild(tdC);
+        tdB.innerText = body;
+        tr.appendChild(tdB);
+        tdV.innerText = `${rawvalue}${suffix}`;
+        tr.appendChild(tdV);
+        tdE.innerText = `${earthvalue}${suffix}`;
+        tr.appendChild(tdE);
+        tdI.innerText = esi.toFixed(3);
+        tr.appendChild(tdI);
+
+        return tr;
+    }
+
+    printAll() {
         [...this.resultsDiv.children].forEach(c => c.parentElement.removeChild(c));
 
         const [table, thead, tbody] = ['table', 'thead', 'tbody'].map(el => document.createElement(el));
@@ -219,12 +338,7 @@ class App {
         });
         table.appendChild(thead);
 
-        const earth = this.getEarthValues();
-
-        this.elws.forEach(e => {
-            const body = this.mapBodyValues(e);
-            const moons = this.getMoons(e);
-
+        this.mappedBodies.forEach(b => {
             const tr = document.createElement('tr');
 
             const [
@@ -233,26 +347,24 @@ class App {
                 tdMoonName, tdMoonMass, tdMoonGrav, tdMoonRad, tdMoonOrbPeriod
             ] = new Array(16).fill().map(_ => document.createElement('td'));
 
-            tdName.innerText = body.name;
-            tdMass.innerText = `${body.mass.toFixed(2)} (${this.calcESI(body.mass, earth.mass)})`;
-            tdGrav.innerText = `${body.gravity.toFixed(2)} (${this.calcESI(body.gravity, earth.gravity)})`;
-            tdRad.innerText = `${body.radius.toFixed(0)} km`;
-            tdTemp.innerText = `${body.temperature.toFixed(2)} K`;
-            tdOrbPeriod.innerText = `${body.orbitalPeriod.toFixed(3)} Days`;
-            tdEcc.innerText = `${body.eccentricity.toFixed(4)}`;
-            tdRotPeriod.innerText = `${body.rotationPeriod.toFixed(2)} Days`;
-            tdPressure.innerText = `${body.pressure.toFixed(2)} atm`;
-            tdOxyAtmos.innerText = `${body.oxygen.toFixed(2)}%`;
-            tdTilt.innerText = `${body.tilt.toFixed(3)}°`;
+            tdName.innerText = b.mapped.name;
+            tdMass.innerText = `${b.mapped.mass.toFixed(2)} (${b.mapped.esi.mass.toFixed(2)})`;
+            tdGrav.innerText = `${b.mapped.gravity.toFixed(2)} (${b.mapped.esi.gravity.toFixed(2)})`;
+            tdRad.innerText = `${b.mapped.radius.toFixed(0)} km (${b.mapped.esi.radius.toFixed(2)})`;
+            tdTemp.innerText = `${b.mapped.temperature.toFixed(2)} K (${b.mapped.esi.temperature.toFixed(2)})`;
+            tdOrbPeriod.innerText = `${b.mapped.orbitalPeriod.toFixed(3)} Days (${b.mapped.esi.orbitalPeriod.toFixed(2)})`;
+            tdEcc.innerText = `${b.mapped.eccentricity.toFixed(4)} (${b.mapped.esi.eccentricity.toFixed(2)})`;
+            tdRotPeriod.innerText = `${b.mapped.rotationPeriod.toFixed(2)} Days (${b.mapped.esi.rotationPeriod.toFixed(2)})`;
+            tdPressure.innerText = `${b.mapped.pressure.toFixed(2)} atm (${b.mapped.esi.pressure.toFixed(2)})`;
+            tdOxyAtmos.innerText = `${b.mapped.oxygen.toFixed(2)}% (${b.mapped.esi.oxygen.toFixed(2)})`;
+            tdTilt.innerText = `${b.mapped.tilt.toFixed(3)}° (${b.mapped.esi.tilt.toFixed(2)})`;
 
-            if (moons.length > 0) {
-                const moon = this.mapBodyValues(moons[0]);
-
-                tdMoonName.innerText = moon.name;
-                tdMoonMass.innerText = moon.mass.toFixed(2);
-                tdMoonGrav.innerText = moon.gravity.toFixed(3);
-                tdMoonRad.innerText = `${moon.radius.toFixed(0)} km`;
-                tdMoonOrbPeriod.innerText = `${moon.orbitalPeriod.toFixed(3)} Days`;
+            if (Object.hasOwn(b, 'moon')) {
+                tdMoonName.innerText = b.moon.name;
+                tdMoonMass.innerText = `${b.moon.mass.toFixed(2)} (${b.moon.esi.mass.toFixed(2)})`;
+                tdMoonGrav.innerText = `${b.moon.gravity.toFixed(3)} (${b.moon.esi.gravity.toFixed(2)})`;
+                tdMoonRad.innerText = `${b.moon.radius.toFixed(0)} km (${b.moon.esi.radius.toFixed(2)})`;
+                tdMoonOrbPeriod.innerText = `${b.moon.orbitalPeriod.toFixed(3)} Days (${b.moon.esi.orbitalPeriod.toFixed(2)})`;
             }
 
             [

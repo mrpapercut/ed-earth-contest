@@ -1,4 +1,74 @@
+@font-face {
+    font-family: 'Eurostile';
+    src: url(fonts/eurostile.eot);
+    src: url(fonts/eurostile.eot?#iefix) format('embedded-opentype'),
+        url(fonts/eurostile.woff2) format('woff2'),
+        url(fonts/eurostile.woff) format('woff'),
+        url(fonts/eurostile.ttf) format('truetype');
+    font-weight: normal;
+    font-style: normal
+}
+
 body {
     background: #222;
     color: #fff;
+    font-family: 'Eurostile';
+}
+
+a {
+    color: #fff;
+}
+
+#inputform,
+#uploadstatus,
+#description,
+#ranking {
+    width: 50%;
+    margin: 1rem auto;
+    text-align: center;
+}
+
+#inputform>div {
+    height: 2rem;
+}
+
+#files {
+    display: none;
+}
+
+label[for=files] {
+    border: 1px solid #fff;
+    cursor: pointer;
+    padding: .5rem 1rem;
+}
+
+#upload-status {
+    clear: both;
+}
+
+#ranking table {
+    border-collapse: collapse;
+    margin: 0 auto;
+}
+
+#ranking table thead {
+    border-bottom: 1px solid #fff;
+}
+
+#ranking table th,
+#ranking table td {
+    padding: 0.25rem;
+    border-left: 1px solid #fff;
+    min-width: 10rem;
+    text-align: left;
+}
+
+#ranking table th:first-child,
+#ranking table td:first-child {
+    border: none;
+}
+
+#allresults {
+    font-family: monospace;
+    font-size: .9rem;
 }

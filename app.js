@@ -195,7 +195,7 @@ class App {
             eccentricity: 0.0167,
             pressure: 1,
             oxygen: 20.9,
-            tilt: 0.4014
+            tilt: 23.439
         }
     }
 
@@ -221,7 +221,7 @@ class App {
             eccentricity: body.Eccentricity,
             pressure: body.SurfacePressure / 101325,
             oxygen: body.AtmosphereComposition?.find(c => c.Name === 'Oxygen')?.Percent || 0,
-            tilt: Math.abs(body.AxialTilt)
+            tilt: Math.abs(body.AxialTilt) / (Math.PI / 180)
         }
 
         if (isELW) {
@@ -346,7 +346,7 @@ class App {
         tbody.appendChild(this.getRankingRow('Rotation period', rotPeriod.name, rotPeriod.rotationPeriod.toFixed(2), earth.rotationPeriod.toFixed(2), rotPeriod.esi.rotationPeriod, ' days'));
         tbody.appendChild(this.getRankingRow('Pressure', pressure.name, pressure.pressure.toFixed(2), earth.pressure.toFixed(2), pressure.esi.pressure, ' atm'));
         tbody.appendChild(this.getRankingRow('Oxygen', oxygen.name, oxygen.oxygen.toFixed(2), earth.oxygen.toFixed(2), oxygen.esi.oxygen, '%'));
-        tbody.appendChild(this.getRankingRow('Tilt', tilt.name, tilt.tilt.toFixed(3), earth.tilt.toFixed(3), tilt.esi.tilt, ' rad'));
+        tbody.appendChild(this.getRankingRow('Tilt', tilt.name, tilt.tilt.toFixed(3), earth.tilt.toFixed(3), tilt.esi.tilt, '°'));
 
         tbody.appendChild(this.getRankingRow('Moon mass', moonMass.name, moonMass.mass.toFixed(4), moon.mass.toFixed(4), moonMass.esi.mass, ' EM'));
         tbody.appendChild(this.getRankingRow('Moon gravity', moonGravity.name, moonGravity.gravity.toFixed(2), moon.gravity.toFixed(2), moonGravity.esi.gravity, ' G'));
@@ -405,7 +405,7 @@ class App {
             tdRotPeriod.innerText = `${b.mapped.rotationPeriod.toFixed(2)} days`;
             tdPressure.innerText = `${b.mapped.pressure.toFixed(2)} atm`;
             tdOxyAtmos.innerText = `${b.mapped.oxygen.toFixed(2)}%`;
-            tdTilt.innerText = `${b.mapped.tilt.toFixed(3)} rad`;
+            tdTilt.innerText = `${b.mapped.tilt.toFixed(3)} °`;
 
             if (Object.hasOwn(b, 'moon')) {
                 tdMoonName.innerText = b.moon.name;

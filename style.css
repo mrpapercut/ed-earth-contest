@@ -1,30 +1,31 @@
-@font-face {
-    font-family: 'Eurostile';
-    src: url(fonts/eurostile.eot);
-    src: url(fonts/eurostile.eot?#iefix) format('embedded-opentype'),
-        url(fonts/eurostile.woff2) format('woff2'),
-        url(fonts/eurostile.woff) format('woff'),
-        url(fonts/eurostile.ttf) format('truetype');
-    font-weight: normal;
-    font-style: normal
-}
-
 body {
     background: #222;
     color: #fff;
-    font-family: 'Eurostile';
+    font-family: monospace;
 }
 
 a {
     color: #fff;
 }
 
+h2 {
+    display: none;
+    width: 50%;
+    margin: 0 auto;
+    border-bottom: 1px solid #fff;
+}
+
+.loaded h2 {
+    display: block;
+}
+
 #inputform,
 #uploadstatus,
 #description,
+#most-similar,
 #ranking {
     width: 50%;
-    margin: 1rem auto;
+    margin: 1rem auto 2rem;
     text-align: center;
 }
 
@@ -44,6 +45,19 @@ label[for=files] {
 
 #upload-status {
     clear: both;
+}
+
+#most-similar {
+    font-size: 1.1rem;
+    clear: both;
+    min-height: 2.2rem;
+}
+
+#most-similar label,
+#most-similar span {
+    width: 40%;
+    display: block;
+    float: left;
 }
 
 #ranking table {
@@ -68,7 +82,36 @@ label[for=files] {
     border: none;
 }
 
+#allresults-h2 {
+    cursor: pointer;
+}
+
+#allresults-h2::after {
+    content: '+';
+    position: relative;
+    left: 1rem;
+}
+
 #allresults {
     font-family: monospace;
-    font-size: .9rem;
+    font-size: .8rem;
+}
+
+#allresults table {
+    margin: 1rem auto;
+    display: none;
+}
+
+#allresults table th,
+#allresults table td {
+    text-align: left;
+    padding-right: .5rem;
+}
+
+#allresults-h2.opened::after {
+    content: '-';
+}
+
+#allresults.opened table {
+    display: table;
 }

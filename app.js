@@ -7,7 +7,7 @@ class App {
     rankingDiv;
     resultsDiv;
 
-    limitToContest = false;
+    limitToContest = true;
     contestStart = +new Date('2025-07-17T02:00:00Z');
     contestEnd = +new Date('2025-09-01T04:00:00Z');
 

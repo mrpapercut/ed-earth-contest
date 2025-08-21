@@ -200,6 +200,35 @@ class App {
         }
     }
 
+    getEmptyPlanet() {
+        return {
+            name: '[None]',
+            mass: 0,
+            gravity: 0,
+            radius: 0,
+            temperature: 0,
+            orbitalPeriod: 0,
+            rotationPeriod: 0,
+            eccentricity: 0,
+            pressure: 0,
+            oxygen: 0,
+            tilt: 0,
+            esi: {
+                mass: 0,
+                gravity: 0,
+                radius: 0,
+                temperature: 0,
+                orbitalPeriod: 0,
+                rotationPeriod: 0,
+                eccentricity: 0,
+                pressure: 0,
+                oxygen: 0,
+                tilt: 0,
+                overall: 0
+            }
+        }
+    }
+
     getMoonValues() {
         return {
             name: 'Moon',
@@ -207,6 +236,22 @@ class App {
             gravity: 0.165,
             radius: 1738,
             orbitalPeriod: 27.322
+        }
+    }
+
+    getEmptyMoon() {
+        return {
+            name: '[None]',
+            mass: 0,
+            gravity: 0,
+            radius: 0,
+            orbitalPeriod: 0,
+            esi: {
+                mass: 0,
+                gravity: 0,
+                radius: 0,
+                orbitalPeriod: 0
+            }
         }
     }
 
@@ -280,7 +325,7 @@ class App {
 
         bodies.sort((a, b) => b.esi[key] - a.esi[key]);
 
-        return bodies[0];
+        return bodies[0] || isELW ? this.getEmptyPlanet() : this.getEmptyMoon();
     }
 
     clearData() {

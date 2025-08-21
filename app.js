@@ -200,35 +200,6 @@ class App {
         }
     }
 
-    getEmptyPlanet() {
-        return {
-            name: '[None]',
-            mass: 0,
-            gravity: 0,
-            radius: 0,
-            temperature: 0,
-            orbitalPeriod: 0,
-            rotationPeriod: 0,
-            eccentricity: 0,
-            pressure: 0,
-            oxygen: 0,
-            tilt: 0,
-            esi: {
-                mass: 0,
-                gravity: 0,
-                radius: 0,
-                temperature: 0,
-                orbitalPeriod: 0,
-                rotationPeriod: 0,
-                eccentricity: 0,
-                pressure: 0,
-                oxygen: 0,
-                tilt: 0,
-                overall: 0
-            }
-        }
-    }
-
     getMoonValues() {
         return {
             name: 'Moon',
@@ -236,22 +207,6 @@ class App {
             gravity: 0.165,
             radius: 1738,
             orbitalPeriod: 27.322
-        }
-    }
-
-    getEmptyMoon() {
-        return {
-            name: '[None]',
-            mass: 0,
-            gravity: 0,
-            radius: 0,
-            orbitalPeriod: 0,
-            esi: {
-                mass: 0,
-                gravity: 0,
-                radius: 0,
-                orbitalPeriod: 0
-            }
         }
     }
 
@@ -325,7 +280,7 @@ class App {
 
         bodies.sort((a, b) => b.esi[key] - a.esi[key]);
 
-        return bodies[0] || isELW ? this.getEmptyPlanet() : this.getEmptyMoon();
+        return bodies[0];
     }
 
     clearData() {
@@ -394,10 +349,14 @@ class App {
         tbody.appendChild(this.getRankingRow('Oxygen', oxygen.name, oxygen.oxygen.toFixed(2), earth.oxygen.toFixed(2), oxygen.esi.oxygen, '%'));
         tbody.appendChild(this.getRankingRow('Tilt', tilt.name, tilt.tilt.toFixed(3), earth.tilt.toFixed(3), tilt.esi.tilt, '°'));
 
-        tbody.appendChild(this.getRankingRow('Moon mass', moonMass.name, moonMass.mass.toFixed(4), moon.mass.toFixed(4), moonMass.esi.mass, ' EM'));
-        tbody.appendChild(this.getRankingRow('Moon gravity', moonGravity.name, moonGravity.gravity.toFixed(2), moon.gravity.toFixed(2), moonGravity.esi.gravity, ' G'));
-        tbody.appendChild(this.getRankingRow('Moon radius', moonRadius.name, moonRadius.radius.toFixed(0), moon.radius.toFixed(0), moonRadius.esi.radius, ' km'));
-        tbody.appendChild(this.getRankingRow('Moon orbital period', moonOrbPeriod.name, moonOrbPeriod.orbitalPeriod.toFixed(3), moon.orbitalPeriod.toFixed(3), moonOrbPeriod.esi.orbitalPeriod, ' days'));
+        if (moonMass)
+            tbody.appendChild(this.getRankingRow('Moon mass', moonMass.name, moonMass.mass.toFixed(4), moon.mass.toFixed(4), moonMass.esi.mass, ' EM'));
+        if (moonGravity)
+            tbody.appendChild(this.getRankingRow('Moon gravity', moonGravity.name, moonGravity.gravity.toFixed(2), moon.gravity.toFixed(2), moonGravity.esi.gravity, ' G'));
+        if (moonRadius)
+            tbody.appendChild(this.getRankingRow('Moon radius', moonRadius.name, moonRadius.radius.toFixed(0), moon.radius.toFixed(0), moonRadius.esi.radius, ' km'));
+        if (moonOrbPeriod)
+            tbody.appendChild(this.getRankingRow('Moon orbital period', moonOrbPeriod.name, moonOrbPeriod.orbitalPeriod.toFixed(3), moon.orbitalPeriod.toFixed(3), moonOrbPeriod.esi.orbitalPeriod, ' days'));
 
         table.appendChild(tbody);
         this.rankingDiv.appendChild(table);
